@@ -22,8 +22,8 @@ driver = webdriver.Chrome(options=chrome_options)  # Initialise le navigateur av
 driver.set_page_load_timeout(30)
 
 roles = [
-    "data analyst", "data scientist"
-    ,"data engineer","full stack developer"
+    "data engineer","data analyst", "data scientist"
+    ,"web developer"
 ]
 
 linkedin_base = "https://www.linkedin.com/jobs-guest/jobs/api/seeMoreJobPostings/search/?keywords={query}&location=Morocco"
@@ -36,15 +36,43 @@ nlp = spacy.load("en_core_web_sm")
 
 # Define possible skills
 possible_skills = [
-    "python", "java", "javascript", "c++", "c#", "R", "php", "typescript", "html", "css",
-    "tensorflow", "keras", "pytorch", "scikit-learn", "pandas", "numpy", "matplotlib", "seaborn", "spark", "hadoop",
-    "sql", "nosql", "mongodb", "mysql", "postgresql", "oracle",
-    "aws", "azure", "google cloud", "gcp", "ibm cloud",
-    "docker", "git", "ci/cd", "linux", "airflow", 
-    "tableau", "power bi", "machine learning", "deep learning", "natural language processing", "nlp", 
-    "computer vision", "reinforcement learning",
-    "rest api", "graphql", "microservices", "agile", "scrum", "excel", 
-    "node.js", "react", "spring boot", "django"
+    # Programming Languages
+    "python", "java", "javascript", "c++", "c#", "R", "php", "typescript", "html", "css", "bash", "shell scripting",
+    
+    # Data Science / AI Libraries
+    "tensorflow", "keras", "pytorch", "scikit-learn", "pandas", "numpy", "matplotlib", "seaborn", "plotly", "bokeh",
+    "spark", "hadoop", "dask", "xgboost", "lightgbm", "catboost", 
+    
+    # Databases
+    "sql", "nosql", "mongodb", "mysql", "postgresql", "oracle", "sqlite", "redis", "elasticsearch", "snowflake", "bigquery",
+    
+    # Cloud Platforms
+    "aws", "azure", "google cloud", "gcp", "ibm cloud", "digitalocean", "heroku",
+    
+    # DevOps / Tools
+    "docker", "kubernetes", "git", "github", "gitlab", "bitbucket", "ci/cd", "jenkins", "linux", "airflow", "terraform",
+    
+    # Data Visualization / BI
+    "tableau", "power bi", "looker", "superset", "excel", "qlik sense",
+    
+    # AI Domains
+    "machine learning", "deep learning", "natural language processing", "nlp", 
+    "computer vision", "reinforcement learning", "generative ai", "llms",
+    
+    # API & Architecture
+    "rest api", "graphql", "microservices", "grpc", "websocket",
+    
+    # Methodologies
+    "agile", "scrum", "kanban", "design patterns", "tdd", "bdd",
+    
+    # Web Development Frameworks
+    "node.js", "react", "spring boot", "django", "flask", "express.js", "angular", "vue.js", "next.js", "nuxt.js",
+    
+    # ETL & Data Engineering
+    "etl", "data pipeline", "dbt", "kafka", "flink", "beam",
+    
+    # Other
+    "fastapi", "streamlit", "dash", "openai api", "langchain", "hugging face"
 ]
 
 # Création du matcher spaCy pour détecter les compétences
@@ -52,7 +80,7 @@ matcher = PhraseMatcher(nlp.vocab, attr="LOWER")  # Ignorer la casse
 patterns = [nlp.make_doc(skill) for skill in possible_skills]  # Transformer chaque compétence en objet spaCy
 matcher.add("SKILLS", patterns)  # Ajouter les motifs au matcher
 
-def scrape_linkedin(role, max_pages=10):  # max_pages : nombre maximum de pages à parcourir
+def scrape_linkedin(role, max_pages=15):  # max_pages : nombre maximum de pages à parcourir
     page = 0
     while page < max_pages:
         # Génère l’URL de recherche
@@ -108,6 +136,7 @@ def scrape_linkedin(role, max_pages=10):  # max_pages : nombre maximum de pages 
                         wait.until(EC.presence_of_element_located((By.CLASS_NAME, "show-more-less-html__markup")))
                         detail_soup = BeautifulSoup(driver.page_source, "html.parser")
                         description_el = detail_soup.find("div", class_="show-more-less-html__markup")
+                       
                     except :
                         print(f"Description not found")
                         description_el = None
@@ -150,5 +179,5 @@ driver.quit()
 
 # ------- Save -------
 df = pd.DataFrame(all_offers)
-df.to_csv("offres_it_maroc.csv", index=False)
-print(f"{len(df)} offres enregistrées dans offres_it_maroc.csv")
+df.to_csv("offres_linkedin.csv", index=False)
+print(f"{len(df)} offres enregistrées dans offres_linkedin.csv")
