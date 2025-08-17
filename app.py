@@ -1,0 +1,235 @@
+import streamlit as st
+import pandas as pd
+import matplotlib.pyplot as plt
+from wordcloud import WordCloud
+from collections import Counter
+import re
+import numpy as np
+import textwrap
+
+# ===========================
+# CSS STYLING
+# ===========================
+st.markdown(
+    """
+    <style>
+    /* Main page background */
+    header[data-testid="stHeader"] {
+        background-color: #e7ebf6;   
+        color: #232b2b;
+    }
+    .stApp {
+        background-color: #e7ebf6;
+        color: #3B3B3B;
+    }
+    /* Sidebar background */
+    section[data-testid="stSidebar"] {
+        background-color: #6b7ca3; 
+        color: #FFFFFF; 
+    }
+    </style>
+    """,
+    unsafe_allow_html=True
+)
+
+# ===========================
+# PAGE CONFIGURATION
+# ===========================
+st.set_page_config(
+    page_title="Plateforme Emploi Tech",
+    layout="wide",
+    initial_sidebar_state="expanded"
+)
+
+# ===========================
+# DATA LOAD
+# ===========================
+df = pd.read_csv("data/dataset_final.csv")
+
+# ===========================
+# SIDEBAR
+# ===========================
+st.sidebar.image("Jobscape.png", width=200)
+roles = df['mapped_role'].unique()
+selected_role = st.sidebar.selectbox("Choisir un rôle :", roles)
+
+# Filter data based on selection
+filtered_df = df[df['mapped_role'] == selected_role]
+
+
+# ===========================
+# CUSTOM TITLE FUNCTION
+# ===========================
+def section_title(text):
+    st.markdown(f"""
+        <h3 style='
+            margin-top:25px;
+            margin-bottom:15px;
+            padding:10px;
+            background-color:#f1f3f9;
+            color:#2D3748;
+            border-left: 6px solid #2D80A7;
+            border-radius: 5px;
+            font-size:20px;
+        '>{text}</h3>
+    """, unsafe_allow_html=True)
+
+
+
+from collections import Counter
+import re
+
+def get_top_skills(df, n=10):
+    skills = []
+    for comp in df['Compétences'].dropna().astype(str):
+        for skill in comp.split(","):
+            skill = skill.strip().lower()
+            if skill:
+                skills.append(skill)
+    skill_counts = dict(Counter(skills))
+    top_skills = dict(sorted(skill_counts.items(), key=lambda x: x[1], reverse=True)[:n])
+    return top_skills
+
+top_skills = get_top_skills(filtered_df, n=10)
+
+def kpi_card(title, value, color="#2D80A7"):
+    st.markdown(f"""
+        <div style="
+            background-color:{color};
+            padding:15px;
+            border-radius:15px;
+            text-align:center;
+            color:white;
+            box-shadow:2px 2px 10px rgba(0,0,0,0.1);
+        ">
+            <h3 style="margin:0; font-size:20px;">{title}</h3>
+            <p style="margin:0; font-size:31px; font-weight:bold;">{value}</p>
+        </div>
+    """, unsafe_allow_html=True)
+
+col1, col2, col3, col4 = st.columns(4)
+
+with col1: 
+    kpi_card("Total Offres", len(filtered_df), "#2D80A7")
+
+with col2: 
+    kpi_card("Entreprises Actives", filtered_df['Entreprise'].nunique(), "#C34121")
+
+with col3: 
+    kpi_card("Villes", filtered_df['Localisation'].nunique(), "#DAB965")
+
+with col4: 
+    top_skill = next(iter(top_skills.keys()), "N/A")
+    kpi_card("Top Compétence", f'"{top_skill.capitalize()}"', "#16463F")
+
+
+
+# ===========================
+# MAIN LAYOUT: 3 COLUMNS
+# ===========================
+col1, col2, col3 = st.columns([1.2, 1, 1.2])
+
+# ---------------------------
+# COLUMN 1: Top Skills (Bar Chart)
+# ---------------------------
+with col1:
+    # st.write("##### Compétences les plus demandées")
+    section_title("Compétences les plus demandées")
+    skills = []
+    for comp in filtered_df['Compétences'].dropna().astype(str):
+        for skill in comp.split(","):
+            skill = skill.strip().lower()
+            if skill:
+                skills.append(skill)
+
+    skill_counts = dict(Counter(skills))
+    top_skills = dict(sorted(skill_counts.items(), key=lambda x: x[1], reverse=True)[:10])
+
+    fig3, ax3 = plt.subplots(figsize=(6, 3.85))
+    colors = ["#DAB965","#C34121",'#2D80A7',"#B37256","#16463F","#787376","#623F4C","#D2A9E5","#C9F6C1","#1C595F"]
+    ax3.bar(top_skills.keys(), top_skills.values(), color=colors)
+    ax3.set_ylabel("Nombre d'occurrences")
+    ax3.set_xlabel("Compétence")
+    ax3.set_title("Top 10 compétences")
+    plt.xticks(rotation=45, ha='right')
+    plt.tight_layout()
+    st.pyplot(fig3)
+
+# ---------------------------
+# COLUMN 2: Top Locations (Pie Chart)
+# ---------------------------
+with col2:
+    section_title("Villes les plus fréquentes")
+    colors = ["#DAB965","#C34121",'#2D80A7',"#B37256","#16463F","#787376","#623F4C"]
+   
+
+    loc_counts = filtered_df[filtered_df['Localisation'] != "Maroc"]['Localisation'].value_counts().head(10)
+
+    fig1, ax1 = plt.subplots(figsize=(6, 6.5), dpi=100)
+    wedges, texts, autotexts = ax1.pie(
+        loc_counts,
+        labels=None,
+        autopct='%1.0f%%',
+        startangle=140,
+        colors=colors,
+        textprops={'fontsize': 15} 
+    )
+
+    wrapped_labels = ["\n".join(textwrap.wrap(label, width=12)) for label in loc_counts.index]
+    ax1.legend(
+        wedges, wrapped_labels, title="Villes",
+        bbox_to_anchor=(1.05, 1), loc='upper left',
+        fontsize=12,
+        handlelength=1,
+        handletextpad=0.5,
+        borderaxespad=0.5,
+        labelspacing=1
+    )
+    ax1.set(aspect="equal")
+    st.pyplot(fig1, clear_figure=True)
+
+# ---------------------------
+# COLUMN 3: Top Companies (WordCloud)
+# ---------------------------
+with col3:
+    section_title("Top entreprises par rôle")
+
+    top_companies = filtered_df['Entreprise'].value_counts().head(30)
+    
+    if top_companies.empty:
+        st.info("Pas d'entreprise à afficher pour ce rôle.")
+    else:
+        companies_dict = {company.replace(" ", "_"): count for company, count in top_companies.items()}
+
+        # Ensure a minimum frequency so words are readable
+        min_count = max(1, max(companies_dict.values()) // 2)
+        companies_dict = {k: max(v, min_count) for k, v in companies_dict.items()}
+
+        wordcloud = WordCloud(
+            width=600,
+            height=360,
+            background_color="white",
+            colormap='cividis',
+            random_state=42
+        ).generate_from_frequencies(companies_dict)
+
+        fig2, ax2 = plt.subplots(figsize=(6, 4))
+        ax2.imshow(wordcloud.recolor(random_state=42), interpolation="bilinear")
+        ax2.axis("off")
+        fig2.canvas.draw()
+        st.pyplot(fig2)
+
+
+# ===========================
+# SECOND ROW: Job Listings Table
+# ===========================
+section_title("Liste des Offres")
+display_df = filtered_df[['Titre', 'Entreprise', 'Localisation', 'Lien']].copy()
+st.dataframe(
+    display_df,
+    column_config={"Lien": st.column_config.LinkColumn("Lien")},
+    height=300
+)
+
+
+

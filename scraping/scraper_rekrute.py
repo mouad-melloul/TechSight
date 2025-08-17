@@ -98,6 +98,9 @@ def scrape_rekrute(role):  # max_pages : nombre maximum de pages à parcourir
 
                 #! (removed) if role_lower in title_text:
                 job_link = link_el["href"]
+                # Convert relative URL to absolute
+                if job_link.startswith("/"):
+                    job_link = "https://www.rekrute.com" + job_link
 
                 # Ouvre le lien de l’offre dans un nouvel onglet
                 driver.execute_script("window.open(arguments[0]);", job_link)

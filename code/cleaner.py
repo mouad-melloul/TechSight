@@ -14,7 +14,7 @@ def cleaner(data):
             df[col] = df[col].astype('string')
     
     moroccan_cities = [
-        "Casablanca","Rabat", "Tangier", "Fez", "Fès", "Marrakesh", "Marrakech", "Salé", "Meknès", "Oujda",
+        "Casablanca","Rabat", "Tangier","Tanger", "Fez", "Fès", "Marrakesh", "Marrakech", "Salé", "Meknès", "Oujda",
         "Kenitra", "Agadir", "Tetouan", "Tétouan", "Temara", "Safi", "Mohammedia", "Khouribga",
         "El Jadida", "Beni Mellal", "Aït Melloul", "Nador", "Dar Bouazza", "Taza", "Settat",
         "Berrechid", "Khemisset", "Inezgane", "Ksar El Kebir", "Larache", "Guelmim", "Khenifra",
@@ -42,6 +42,8 @@ def cleaner(data):
         if ',' in loc:
             city_part = normalize(loc.split(',')[0].strip())
             matches = [c for c in moroccan_cities if normalize(c) in city_part]
+            if not matches:
+                matches = [c for c in moroccan_cities if normalize(c) in loc_norm]
         else:
             matches = [c for c in moroccan_cities if normalize(c) in loc_norm]
 
