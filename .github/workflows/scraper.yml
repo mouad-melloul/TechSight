@@ -34,6 +34,4 @@ jobs:
           git config --local user.name "GitHub Action"
           git add data/dataset_final.csv
           git commit -m "Update dataset_final.csv [Automated]" || echo "No changes to commit"
-          git push https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/mouad-melloul/TechSight.git HEAD:main
-
-
+          git push
