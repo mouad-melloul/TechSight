@@ -78,17 +78,7 @@ def scrape_linkedin(role, max_pages=15):
                 posted_text = time_el.text.strip().lower()
 
                 # Keep jobs posted in the past week (1-7 days) or hours
-                keep = False
-                if "hour" in posted_text:
-                    keep = True
-                elif "hours" in posted_text:
-                    keep = True
-                else:
-                    for i in range(1, 8):
-                        if f"{i} day" in posted_text or f"{i} days" in posted_text or f"1 week" in posted_text:
-                            keep = True
-                            break
-                if not keep:
+                if not any(x in posted_text for x in ["hour", "hours"] + [f"{i} day" for i in range(1,8)] + ["1 week"]):
                     continue
 
                 job_link = link_el["href"]
@@ -210,7 +200,14 @@ driver.quit()
 new_df = pd.DataFrame(all_offers)
 
 # Merge with existing dataset
-dataset_final_path = "data/dataset_final.csv"
+import os
+
+# Get folder of current script
+script_dir = os.path.dirname(os.path.abspath(__file__))
+
+# Path to dataset_final.csv
+dataset_final_path = os.path.join(script_dir, "..", "data", "dataset_final.csv")
+
 try:
     old_df = pd.read_csv(dataset_final_path)
     combined = pd.concat([old_df, new_df], ignore_index=True)
