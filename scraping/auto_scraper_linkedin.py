@@ -47,7 +47,7 @@ patterns = [nlp.make_doc(skill) for skill in possible_skills]
 matcher.add("SKILLS", patterns)
 
 # ---------------------- SCRAPER FUNCTION ----------------------
-def scrape_linkedin(role, max_pages=5):
+def scrape_linkedin(role, max_pages=15):
     page = 0
     while page < max_pages:
         url = linkedin_base.format(query=role.replace(" ", "%20")) + f"&start={page * 25}"
@@ -81,9 +81,11 @@ def scrape_linkedin(role, max_pages=5):
                 keep = False
                 if "hour" in posted_text:
                     keep = True
+                elif "hours" in posted_text:
+                    keep = True
                 else:
                     for i in range(1, 8):
-                        if f"{i} day" in posted_text or f"{i} days" in posted_text:
+                        if f"{i} day" in posted_text or f"{i} days" in posted_text or f"1 week" in posted_text:
                             keep = True
                             break
                 if not keep:
