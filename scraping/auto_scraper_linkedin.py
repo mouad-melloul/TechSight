@@ -47,7 +47,7 @@ patterns = [nlp.make_doc(skill) for skill in possible_skills]
 matcher.add("SKILLS", patterns)
 
 # ---------------------- SCRAPER FUNCTION ----------------------
-def scrape_linkedin(role, max_pages=15):
+def scrape_linkedin(role, max_pages=10):
     page = 0
     while page < max_pages:
         url = linkedin_base.format(query=role.replace(" ", "%20")) + f"&start={page * 25}"
@@ -78,7 +78,8 @@ def scrape_linkedin(role, max_pages=15):
                 posted_text = time_el.text.strip().lower()
 
                 # Keep jobs posted in the past week (1-7 days) or hours
-                if not any(x in posted_text for x in ["hour", "hours"] + [f"{i} day" for i in range(1,8)] + ["1 week"]):
+                # Keep jobs posted in the past week
+                if not any(x in posted_text for x in ["hour", "hours", "h"] + [f"{i} day" for i in range(1,8)] + ["week", "w"]):
                     continue
 
                 job_link = link_el["href"]
@@ -188,7 +189,7 @@ def cleaner(df):
     df.drop_duplicates(subset=["Titre", "Entreprise", "Localisation"], inplace=True)
     df.drop('Rôle', axis=1, inplace=True, errors="ignore")
 
-    df.to_csv("data/dataset_final.csv", index=False)
+    df.to_csv(dataset_final_path, index=False)
     return df
 
 # ---------------------- RUN ----------------------
@@ -208,6 +209,7 @@ script_dir = os.path.dirname(os.path.abspath(__file__))
 # Path to dataset_final.csv
 dataset_final_path = os.path.join(script_dir, "..", "data", "dataset_final.csv")
 
+# Merge with existing dataset
 try:
     old_df = pd.read_csv(dataset_final_path)
     combined = pd.concat([old_df, new_df], ignore_index=True)
