@@ -95,6 +95,19 @@ def cleaner(data):
 
     df.to_csv(f"cleaned_data_{source}.csv")
 
+    # df['mapped_role'] = df['Titre'].apply(map_title_to_role)
+
+    # # 🔹 Apply your filters
+    # df.drop(df[df["mapped_role"] == "autre"].index, axis=0, inplace=True)
+    # df.drop_duplicates(inplace=True)
+    # df.drop_duplicates(subset=["Titre", "Entreprise", "Localisation"], inplace=True)
+
+    # # Drop old "Rôle" if exists
+    # df.drop('Rôle', axis=1, inplace=True, errors="ignore")
+
+    # # Save cleaned version
+    # df.to_csv(f"cleaned_data_{source}.csv", index=False)
+
     return df
 
 
