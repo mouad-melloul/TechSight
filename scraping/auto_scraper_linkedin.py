@@ -11,10 +11,9 @@ from selenium.webdriver.support import expected_conditions as EC
 import unicodedata
 import chromedriver_autoinstaller
 
+# ---------------------- CHROMEDRIVER SETUP ----------------------
+chromedriver_autoinstaller.install()  # Automatically install the correct ChromeDriver
 
-# Automatically install the correct ChromeDriver
-chromedriver_autoinstaller.install()
-# ---------------------- SETUP ----------------------
 chrome_options = Options()
 chrome_options.add_argument("--headless")
 chrome_options.add_argument("--no-sandbox")
@@ -24,7 +23,8 @@ chrome_options.add_argument("user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64
 driver = webdriver.Chrome(options=chrome_options)
 driver.set_page_load_timeout(30)
 
-roles = ["data engineer", "data analyst", "data scientist", "web developer","software engineer"]
+# ---------------------- PARAMETERS ----------------------
+roles = ["data engineer", "data analyst", "data scientist", "web developer", "software engineer"]
 linkedin_base = "https://www.linkedin.com/jobs-guest/jobs/api/seeMoreJobPostings/search/?keywords={query}&location=Morocco"
 
 all_offers = []
@@ -36,17 +36,17 @@ possible_skills = [
     "tensorflow", "keras", "pytorch", "scikit-learn", "pandas", "numpy", "matplotlib", "seaborn", "spark", "hadoop",
     "sql", "nosql", "mongodb", "mysql", "postgresql", "oracle",
     "aws", "azure", "google cloud", "gcp", "ibm cloud",
-    "docker", "git", "ci/cd", "linux", "airflow", 
-    "tableau", "power bi", "machine learning", "deep learning", "natural language processing", "nlp", 
+    "docker", "git", "ci/cd", "linux", "airflow",
+    "tableau", "power bi", "machine learning", "deep learning", "natural language processing", "nlp",
     "computer vision", "reinforcement learning",
-    "rest api", "graphql", "microservices", "agile", "scrum", "excel", 
+    "rest api", "graphql", "microservices", "agile", "scrum", "excel",
     "node.js", "react", "spring boot", "django"
 ]
 matcher = PhraseMatcher(nlp.vocab, attr="LOWER")
 patterns = [nlp.make_doc(skill) for skill in possible_skills]
 matcher.add("SKILLS", patterns)
 
-# ---------------------- SCRAPER ----------------------
+# ---------------------- SCRAPER FUNCTION ----------------------
 def scrape_linkedin(role, max_pages=5):
     page = 0
     while page < max_pages:
@@ -76,7 +76,17 @@ def scrape_linkedin(role, max_pages=5):
                     continue
 
                 posted_text = time_el.text.strip().lower()
-                if not ("hour" in posted_text or "day" in posted_text and "1" in posted_text):
+
+                # Keep jobs posted in the past week (1-7 days) or hours
+                keep = False
+                if "hour" in posted_text:
+                    keep = True
+                else:
+                    for i in range(1, 8):
+                        if f"{i} day" in posted_text or f"{i} days" in posted_text:
+                            keep = True
+                            break
+                if not keep:
                     continue
 
                 job_link = link_el["href"]
@@ -118,7 +128,7 @@ def scrape_linkedin(role, max_pages=5):
                 continue
         page += 1
 
-# ---------------------- CLEANER ----------------------
+# ---------------------- CLEANER FUNCTION ----------------------
 def cleaner(df):
     df = df.copy()
     source = df['Source'].unique()[0]
@@ -186,7 +196,6 @@ def cleaner(df):
     df.drop_duplicates(subset=["Titre", "Entreprise", "Localisation"], inplace=True)
     df.drop('Rôle', axis=1, inplace=True, errors="ignore")
 
-    # Sauvegarde finale
     df.to_csv("data/dataset_final.csv", index=False)
     return df
 
@@ -198,8 +207,7 @@ driver.quit()
 
 new_df = pd.DataFrame(all_offers)
 
-# Merge avec dataset_final.csv
-
+# Merge with existing dataset
 dataset_final_path = "data/dataset_final.csv"
 try:
     old_df = pd.read_csv(dataset_final_path)
@@ -208,6 +216,6 @@ except FileNotFoundError:
     print("Dataset final not found, creating a new one")
     combined = new_df
 
-# Nettoyage et sauvegarde finale
+# Clean and save
 cleaned_df = cleaner(combined)
 print(f"{len(new_df)} nouvelles offres récupérées. Total après nettoyage: {len(cleaned_df)}")
