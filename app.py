@@ -15,16 +15,16 @@ st.markdown(
     <style>
     /* Main page background */
     header[data-testid="stHeader"] {
-        background-color: #e7ebf6;   
-        color: #232b2b;
+        background-color: #F2F3F2;   
+        color: #3B3B3B;
     }
     .stApp {
-        background-color: #e7ebf6;
+        background-color: #F2F3F2;
         color: #3B3B3B;
     }
     /* Sidebar background */
     section[data-testid="stSidebar"] {
-        background-color: #6b7ca3; 
+        background-color: #0e123e; 
         color: #FFFFFF; 
     }
     </style>
@@ -65,14 +65,17 @@ def section_title(text):
         <h3 style='
             margin-top:25px;
             margin-bottom:15px;
-            padding:10px;
-            background-color:#f1f3f9;
-            color:#2D3748;
-            border-left: 6px solid #2D80A7;
-            border-radius: 5px;
+            padding:12px 20px;
+            background-color:white; /* soft matching with F2F3F2 */
+            color:#1F2933; /* dark text for contrast */
+            border-left: 3px solid #4D5180;   /*accent color */
+            border-radius: 8px;
             font-size:20px;
+            font-weight:600;
+            box-shadow: 2px 2px 5px rgba(0,0,0,0.08); /* subtle shadow */
         '>{text}</h3>
     """, unsafe_allow_html=True)
+
 
 
 
@@ -92,35 +95,48 @@ def get_top_skills(df, n=10):
 
 top_skills = get_top_skills(filtered_df, n=10)
 
-def kpi_card(title, value, color="#2D80A7"):
+st.markdown(
+    """
+    <style>
+    /* Hide the Streamlit header action elements (anchor link) */
+    [data-testid="stHeaderActionElements"] {
+        display: none !important;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True
+)
+
+def kpi_card(title, value, color="#E0E2DF"):
     st.markdown(f"""
         <div style="
             background-color:{color};
-            padding:15px;
+            padding:10px;
             border-radius:15px;
             text-align:center;
-            color:white;
+            color:black;
+            border-bottom: 6px solid #4D5180;
             box-shadow:2px 2px 10px rgba(0,0,0,0.1);
         ">
-            <h3 style="margin:0; font-size:20px;">{title}</h3>
-            <p style="margin:0; font-size:31px; font-weight:bold;">{value}</p>
+            <h3 style="font-size:20px;font-weight:600;color:#1F2933;">{title}</h3>
+            <p style="font-size:33px;font-weight:600;">{value}</p>
         </div>
     """, unsafe_allow_html=True)
 
 col1, col2, col3, col4 = st.columns(4)
 
 with col1: 
-    kpi_card("Total Offres", len(filtered_df), "#2D80A7")
+    kpi_card("Total Offres", len(filtered_df))
 
 with col2: 
-    kpi_card("Entreprises Actives", filtered_df['Entreprise'].nunique(), "#C34121")
+    kpi_card("Entreprises Actives", filtered_df['Entreprise'].nunique())
 
 with col3: 
-    kpi_card("Villes", filtered_df['Localisation'].nunique(), "#DAB965")
+    kpi_card("Villes", filtered_df['Localisation'].nunique())
 
 with col4: 
     top_skill = next(iter(top_skills.keys()), "N/A")
-    kpi_card("Top Compétence", f'"{top_skill.capitalize()}"', "#16463F")
+    kpi_card("Top Compétence", f'"{top_skill.capitalize()}"')
 
 
 
@@ -145,8 +161,8 @@ with col1:
     skill_counts = dict(Counter(skills))
     top_skills = dict(sorted(skill_counts.items(), key=lambda x: x[1], reverse=True)[:10])
 
-    fig3, ax3 = plt.subplots(figsize=(6, 3.85))
-    colors = ["#DAB965","#C34121",'#2D80A7',"#B37256","#16463F","#787376","#623F4C","#D2A9E5","#C9F6C1","#1C595F"]
+    fig3, ax3 = plt.subplots(figsize=(6, 3.7))
+    colors = ["#a6a5e7"]
     ax3.bar(top_skills.keys(), top_skills.values(), color=colors)
     ax3.set_ylabel("Nombre d'occurrences")
     ax3.set_xlabel("Compétence")
@@ -160,10 +176,11 @@ with col1:
 # ---------------------------
 with col2:
     section_title("Villes les plus fréquentes")
-    colors = ["#DAB965","#C34121",'#2D80A7',"#B37256","#16463F","#787376","#623F4C"]
+    colors = ["#71a0a5","#acc6aa","#cda715",'#87222d',"#9681f0","#fd9a24","#787376","#623F4C"]
    
 
-    loc_counts = filtered_df[filtered_df['Localisation'] != "Maroc"]['Localisation'].value_counts().head(10)
+    loc_counts = filtered_df[~filtered_df['Localisation'].isin(["Maroc", "Morocco"])]['Localisation'].value_counts().head(10)
+
 
     fig1, ax1 = plt.subplots(figsize=(6, 6.5), dpi=100)
     wedges, texts, autotexts = ax1.pie(
