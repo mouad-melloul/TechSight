@@ -78,7 +78,6 @@ def scrape_linkedin(role, max_pages=10):
                 posted_text = time_el.text.strip().lower()
 
                 # Keep jobs posted in the past week (1-7 days) or hours
-                # Keep jobs posted in the past week
                 if not any(x in posted_text for x in ["hour", "hours", "h"] + [f"{i} day" for i in range(1,8)] + ["week", "w"]):
                     continue
 
@@ -131,6 +130,7 @@ def cleaner(df):
         if df[col].dtype == 'object':
             df[col] = df[col].astype('string')
 
+        
     moroccan_cities = [
         "Casablanca","Rabat","Tangier","Tanger","Fez","Fès","Marrakesh","Marrakech","Salé","Meknès","Oujda",
         "Kenitra","Agadir","Tetouan","Tétouan","Temara","Safi","Mohammedia","Khouribga",
@@ -145,21 +145,40 @@ def cleaner(df):
         "Midelt","Azrou","Drargua","Laâyoune","Dakhla","Taliouine","Ifrane","Sala al Jadida"
     ]
 
+    # Synonyms mapping → canonical name
+    city_synonyms = {
+        "Tangier": ["Tangier", "Tanger"],
+        "Fez": ["Fez", "Fès", "Fes"]
+    }
+
     def normalize(text):
-        text = str(text).lower()
+        text = str(text).lower().strip()
         return ''.join(c for c in unicodedata.normalize('NFD', text) if unicodedata.category(c) != 'Mn')
 
+    # Build synonym lookup dict
+    synonym_to_city = {}
+    for canonical, syns in city_synonyms.items():
+        for s in syns:
+            synonym_to_city[normalize(s)] = canonical
+
+    def map_location_to_city(location):
+        loc_norm = normalize(location.split(',')[0] if ',' in location else location)
+        # 1. Check synonyms
+        for syn, canonical in synonym_to_city.items():
+            if syn in loc_norm:
+                return canonical
+
+        # 2. Check city list
+        for c in moroccan_cities:
+            if normalize(c) in loc_norm:
+                return c
+        return None
+
     for i, loc in enumerate(df['Localisation']):
-        loc_norm = normalize(loc)
-        if ',' in loc:
-            city_part = normalize(loc.split(',')[0].strip())
-            matches = [c for c in moroccan_cities if normalize(c) in city_part]
-            if not matches:
-                matches = [c for c in moroccan_cities if normalize(c) in loc_norm]
-        else:
-            matches = [c for c in moroccan_cities if normalize(c) in loc_norm]
-        if matches:
-            df.loc[i, 'Localisation'] = matches[0]
+        matched_city = map_location_to_city(loc)
+        if matched_city:
+            df.loc[i, 'Localisation'] = matched_city
+
 
     role_keywords = {
         "data scientist": ["data scientist", "data scientists", "data science"],
@@ -200,13 +219,10 @@ driver.quit()
 
 new_df = pd.DataFrame(all_offers)
 
-# Merge with existing dataset
 import os
 
 # Get folder of current script
 script_dir = os.path.dirname(os.path.abspath(__file__))
-
-# Path to dataset_final.csv
 dataset_final_path = os.path.join(script_dir, "..", "data", "dataset_final.csv")
 
 # Merge with existing dataset
