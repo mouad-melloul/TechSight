@@ -238,10 +238,49 @@ with col3:
 
 
 # ===========================
+# LINE CHART: Nombre d'offres par mois
+# ===========================
+section_title("Nombre d'offres par mois")
+
+filtered_df['Date'] = pd.to_datetime(filtered_df['Date'], errors='coerce')
+filtered_df['YearMonth'] = filtered_df['Date'].dt.to_period('M')
+offers_by_month = filtered_df.groupby('YearMonth').size()
+
+
+fig4, ax4 = plt.subplots(figsize=(8, 4.5))
+ax4.plot(
+    offers_by_month.index.astype(str),
+    offers_by_month.values,
+    marker='o',
+    linestyle='-',
+    linewidth=2.5,
+    markersize=8,
+    color="#4D5180",          # line color
+    markerfacecolor="#a6a5e7",# marker fill
+    markeredgecolor="#2D3748" # marker border
+)
+
+ax4.set_title(f"Évolution des offres pour {selected_role}", fontsize=15, fontweight="bold", color="#1F2933")
+ax4.set_xlabel("Mois", fontsize=12, labelpad=10, color="#374151")
+ax4.set_ylabel("Nombre d'offres", fontsize=12, labelpad=10, color="#374151")
+
+ax4.grid(True, which='major', linestyle='--', alpha=0.4)
+
+plt.xticks(rotation=45, fontsize=10, ha="right")
+plt.yticks(fontsize=10)
+
+ax4.spines['top'].set_visible(False)
+ax4.spines['right'].set_visible(False)
+
+plt.tight_layout()
+st.pyplot(fig4)
+
+
+# ===========================
 # SECOND ROW: Job Listings Table
 # ===========================
 section_title("Liste des Offres")
-display_df = filtered_df[['Titre', 'Entreprise', 'Localisation', 'Lien']].copy()
+display_df = filtered_df[['Titre', 'Entreprise', 'Localisation','Date','Compétences','Lien']].copy()
 st.dataframe(
     display_df,
     column_config={"Lien": st.column_config.LinkColumn("Lien")},

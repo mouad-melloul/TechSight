@@ -81,6 +81,13 @@ def scrape_linkedin(role, max_pages=10):
                 if not any(x in posted_text for x in ["hour", "hours", "h"] + [f"{i} day" for i in range(1,8)] + ["week", "w"]):
                     continue
 
+                date_el = (
+                    card.find("time", class_="job-search-card__listdate")
+                    or card.find("time", class_="job-search-card__listdate--new")
+                )
+                date_attr = date_el["datetime"] if date_el and date_el.has_attr("datetime") else ""
+
+
                 job_link = link_el["href"]
 
                 driver.execute_script("window.open(arguments[0]);", job_link)
@@ -109,7 +116,8 @@ def scrape_linkedin(role, max_pages=10):
                     "Entreprise": company_el.text.strip() if company_el else "",
                     "Localisation": location_el.text.strip() if location_el else "",
                     "Lien": job_link,
-                    "Compétences": ", ".join(skills)
+                    "Compétences": ", ".join(skills),
+                    "Date": date_attr 
                 })
 
                 driver.close()
@@ -119,6 +127,13 @@ def scrape_linkedin(role, max_pages=10):
                 print(f"[ERROR] {e}")
                 continue
         page += 1
+
+
+import os
+
+# Get folder of current script
+script_dir = os.path.dirname(os.path.abspath(__file__))
+dataset_final_path = os.path.join(script_dir, "..", "data", "dataset_final.csv")
 
 # ---------------------- CLEANER FUNCTION ----------------------
 def cleaner(df):
@@ -219,11 +234,6 @@ driver.quit()
 
 new_df = pd.DataFrame(all_offers)
 
-import os
-
-# Get folder of current script
-script_dir = os.path.dirname(os.path.abspath(__file__))
-dataset_final_path = os.path.join(script_dir, "..", "data", "dataset_final.csv")
 
 # Merge with existing dataset
 try:
