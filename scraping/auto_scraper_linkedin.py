@@ -177,16 +177,27 @@ def cleaner(df):
             synonym_to_city[normalize(s)] = canonical
 
     def map_location_to_city(location):
-        loc_norm = normalize(location.split(',')[0] if ',' in location else location)
-        # 1. Check synonyms
+       
+        loc_norm = normalize(location)
+        first_part = normalize(location.split(',')[0] if ',' in location else location)
+        
+        for syn, canonical in synonym_to_city.items():
+            if syn in first_part:
+                return canonical
+
+        for c in moroccan_cities:
+            if normalize(c) in first_part:
+                return c
+
+        # Step 2: fallback — check whole string if first part fails
         for syn, canonical in synonym_to_city.items():
             if syn in loc_norm:
                 return canonical
 
-        # 2. Check city list
         for c in moroccan_cities:
             if normalize(c) in loc_norm:
                 return c
+
         return None
 
     for i, loc in enumerate(df['Localisation']):
