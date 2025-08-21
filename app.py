@@ -49,7 +49,7 @@ df = pd.read_csv("data/dataset_final.csv")
 # ===========================
 # SIDEBAR
 # ===========================
-st.sidebar.image("Jobscape.png", width=200)
+st.sidebar.image("TechSight.png", width=220)
 roles = df['mapped_role'].unique()
 selected_role = st.sidebar.selectbox("Choisir un rôle :", roles)
 
@@ -231,7 +231,7 @@ with col1:
         ax2.set_ylabel("Entreprise", fontsize=12, labelpad=10, color="#374151")
 
         # Titre personnalisé
-        fig2.text(0.02, 0.98, "Top entreprises par rôle",
+        fig2.text(0.02, 0.98, "Top 5 entreprises par rôle",
                   fontsize=10, fontweight="bold", ha="left", va="top")
 
         # Supprimer les bordures inutiles
