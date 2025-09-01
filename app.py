@@ -121,7 +121,7 @@ with col2:
     kpi_card("Top Skill", top_skill_display)
 
 with col3: 
-    colors = ["#32625c","#bad989","#87ada8","#7ec08c","#8cbfb6","#b0e4db","#6a9c93","#8cbfb6","#b0e4db","#787376","#623F4C"]
+    colors = ["#4b7c74","#bad989","#87ada8","#7ec08c","#8cbfb6","#b0e4db","#6a9c93","#8cbfb6","#b0e4db","#787376","#623F4C"]
     loc_counts = filtered_df[~filtered_df['Localisation'].isin(["Maroc", "Morocco"])]['Localisation'].value_counts().head(10)
 
     fig1, ax1 = plt.subplots(figsize=(6, 6.5), dpi=100)
