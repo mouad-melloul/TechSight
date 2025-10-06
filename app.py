@@ -12,16 +12,16 @@ st.markdown(
     """
     <style>
     header[data-testid="stHeader"] {
-        background-color: #eeefef;   
-        color: #3B3B3B;
+        background-color: #f1f1e6;   
+        color: #1b1b1b;
     }
     .stApp {
-        background-color: #eeefef;
-        color: #3B3B3B;
+        background-color: #f1f1e6;
+        color: #1b1b1b;
     }
     section[data-testid="stSidebar"] {
-        background-color: #32625c; 
-        color: #FFFFFF; 
+        background-color: #354458; 
+        color: #bcc0c4; 
     }
     </style>
     """,
@@ -39,10 +39,50 @@ st.set_page_config(
 df = pd.read_csv("data/dataset_final.csv")
 
 # --- Sidebar ---
+# st.sidebar.image("TechSight.png", width=220)
+# roles = df['mapped_role'].unique()
+# selected_role = st.sidebar.selectbox("Choisir un rôle :", roles)
+# filtered_df = df[df['mapped_role'] == selected_role]
+# --- Sidebar selectbox styling ---
+st.markdown(
+    """
+    <style>
+    /* Style the sidebar selectbox container */
+    section[data-testid="stSidebar"] .stSelectbox {
+        background-color: #2c3e50;  /* Darker blue background */
+        border-radius: 8px;
+        padding: 5px 10px;
+        margin-bottom: 0px;
+        padding-bottom:10px;
+    }
+
+    /* Style the select text */
+    section[data-testid="stSidebar"] .stSelectbox div[data-baseweb="select"] > div {
+        color: #f4f8fa;   /* Text color */
+        font-weight: 600;
+        font-size: 14px;
+        background-color: #3b4a5a;  /* Slightly lighter than container */
+        border-radius: 8px;
+    }
+
+    /* Style the label/title of the selectbox */
+    section[data-testid="stSidebar"] label {
+        color: #f4f8fa;
+        font-weight: bold;
+        font-size: 16px;
+        margin-bottom: 5px;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True
+)
+
+# --- Sidebar ---
 st.sidebar.image("TechSight.png", width=220)
 roles = df['mapped_role'].unique()
-selected_role = st.sidebar.selectbox("Choisir un rôle :", roles)
+selected_role = st.sidebar.selectbox("Sélectionnez un rôle :", roles)
 filtered_df = df[df['mapped_role'] == selected_role]
+
 
 # --- Top skills ---
 def get_top_skills(df, n=10):
@@ -71,35 +111,40 @@ st.markdown(
 )
 
 # --- KPI card ---
-def kpi_card(title, value, bg_color="#265d56", text_color="#FFFFFF"):
+def kpi_card(title, value, gradient="linear-gradient(135deg, #354458, #959ca7)"):
     st.markdown(f"""
         <div style="
-            text-align:center;
-            margin-top:20px;
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 15px 20px;
+            text-align: center;
+            color: white;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            margin-top: 10px;
+            min-width: 120px;
+            background-image: {gradient};
         ">
             <div style="
-                font-size:16px;
-                font-weight:600;
-                color:#1F2933;
-                margin-bottom:6px;
+                font-size: 15px;
+                margin-bottom: 5px;
+                font-weight: 600;
+                opacity: 0.9;
             ">
                 {title}
             </div>
             <div style="
-                display:inline-block;
-                background-color:{bg_color};
-                border-radius:25px;
-                padding:5px 28px;
-                color:{text_color};
-                font-size:24px;
-                font-weight:600;
-                min-width:150px;
+                font-size: 26px;
+                font-weight: 600;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                gap: 8px;
             ">
-                {value}
+                <span>{value}</span>
             </div>
         </div>
     """, unsafe_allow_html=True)
-
 
 # --- KPI section ---
 col1, col2, col3, col4 = st.columns([0.4, 0.4, 0.8, 1])
@@ -121,7 +166,7 @@ with col2:
     kpi_card("Top Skill", top_skill_display)
 
 with col3: 
-    colors = ["#4b7c74","#bad989","#87ada8","#7ec08c","#8cbfb6","#b0e4db","#6a9c93","#8cbfb6","#b0e4db","#787376","#623F4C"]
+    colors = ["#647288","#3095d7","#1ba59f","#ea7361","#9e9e9e","#b0e4db","#6a9c93","#8cbfb6","#b0e4db","#787376","#623F4C"]
     loc_counts = filtered_df[~filtered_df['Localisation'].isin(["Maroc", "Morocco"])]['Localisation'].value_counts().head(10)
 
     fig1, ax1 = plt.subplots(figsize=(6, 6.5), dpi=100)
@@ -166,7 +211,18 @@ with col4:
     top_skills = dict(sorted(skill_counts.items(), key=lambda x: x[1], reverse=True)[:10])
 
     fig3, ax3 = plt.subplots(figsize=(6, 3.4))
-    colors = ["#37766f","#669986","#78a491","#92b99d","#a5c5a6","#b2ceaf","#c3dab7","#cfe3bc","#d7e7c1","#d9e9c2"]
+    colors =  [
+    "#344256",
+    "#42556e",
+    "#516887",
+    "#607b9f",
+    "#788fae",
+    "#91a4bd",
+    "#a9b8cb",
+    "#c2ccda",
+    "#dae1e9",
+    "#f3f5f8"
+    ]
 
     ax3.bar(top_skills.keys(), top_skills.values(), color=colors)
     ax3.grid(axis="y", linestyle="--", alpha=0.5)
@@ -188,7 +244,13 @@ with col1:
         st.info("Pas d'entreprise à afficher pour ce rôle.")
     else:
         fig2, ax2 = plt.subplots(figsize=(6, 3.4))
-        colors = ["#37766f","#669986","#78a491","#92b99d","#a5c5a6"]
+        colors = colors =  [
+        "#445872",
+        "#607b9f",
+        "#8da1bb",
+        "#bbc6d6",
+        "#e8ecf1"
+        ]
 
         def truncate_label(label, max_len=15):
             return label if len(label) <= max_len else label[:max_len-3] + "..."
@@ -219,9 +281,9 @@ with col2:
         linestyle='-',
         linewidth=2.5,
         markersize=8,
-        color="#37766f",
-        markerfacecolor="#78a491",
-        markeredgecolor="#2D3748"
+        color="#3095d7",
+        markerfacecolor="#2D3748",
+        markeredgecolor="#3095d7"
     )
 
     ax4.set_xlabel("Mois", fontsize=12, labelpad=10, color="#374151")
