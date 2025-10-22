@@ -31,26 +31,6 @@ TechSight collecte automatiquement les offres d'emploi tech depuis LinkedIn, les
 ### Automation 
 - **GitHub Actions** - pour le scraping automatique
 
-## Structure du Projet
-
-```
-mouad-melloul-techsight/
-├── README.md                    # Documentation du projet
-├── app.py                      # Application Streamlit principale
-├── requirements.txt            # Dépendances Python
-├── TechSight.png              # Logo de l'application
-├── code/
-│   ├── cleaning.ipynb         # Notebook de nettoyage des données
-│   └── functions.py           # Fonctions utilitaires
-├── data/
-│   └── dataset_final.csv      # Dataset des offres d'emploi
-├── scraping/
-│   └── auto_scraper_linkedin.py  # Script de scraping LinkedIn
-└── .github/
-    └── workflows/
-        └── scraper.yml        # Workflow GitHub Actions
-```
-
 ## Installation et Configuration
 
 ### Prérequis
@@ -82,6 +62,24 @@ streamlit run app.py
 ```
 
 L'application sera accessible sur `http://localhost:8501`
+
+### Docker
+
+Pour exécuter l'application via Docker, vous pouvez construire l'image et lancer le conteneur en montant votre dossier data/ :
+
+# Construire l'image Docker
+```bash
+docker build -t streamlit-app .
+```
+# Lancer le conteneur
+```bash
+docker run -p 8501:8501 -v ${PWD}/data:/app/data streamlit-app
+```
+- Vous montez votre dossier local data/ dans le conteneur.
+- Toute modification provenant de GitHub Actions ou de votre git pull local apparaît immédiatement dans le conteneur.
+- Inversement, si le conteneur écrit quelque chose (par exemple de nouvelles lignes dans un CSV), le dossier local data/ est automatiquement mis à jour.
+
+Vous pourrez alors accéder à l'application sur http://localhost:8501 comme avec l'exécution directe via Streamlit.
 
 ## Utilisation
 
