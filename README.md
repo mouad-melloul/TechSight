@@ -2,11 +2,9 @@
 
 Une plateforme complète d'analyse du marché de l'emploi technologique au Maroc, utilisant le web scraping automatisé et la visualisation de données pour fournir des insights précieux sur les tendances d'embauche.
 
-## Aperçu du Projet
-
 TechSight collecte automatiquement les offres d'emploi tech depuis LinkedIn, les analyse et présente des visualisations interactives pour aider les professionnels et recruteurs à comprendre les tendances du marché.
 
-### Fonctionnalités Principales
+## Fonctionnalités Principales
 
 - **Scraping Automatisé** : Collection quotidienne d'offres d'emploi depuis LinkedIn
 - **Analyse des Compétences** : Extraction et analyse des compétences techniques demandées
@@ -67,11 +65,11 @@ L'application sera accessible sur `http://localhost:8501`
 
 Pour exécuter l'application via Docker, vous pouvez construire l'image et lancer le conteneur en montant votre dossier data/ :
 
-# Construire l'image Docker
+1. Construire l'image Docker
 ```bash
 docker build -t streamlit-app .
 ```
-# Lancer le conteneur
+2. Lancer le conteneur
 ```bash
 docker run -p 8501:8501 -v ${PWD}/data:/app/data streamlit-app
 ```
