@@ -7,7 +7,6 @@ import re
 import numpy as np
 import textwrap
 
-# --- CSS styling ---
 st.markdown(
     """
     <style>
@@ -28,22 +27,16 @@ st.markdown(
     unsafe_allow_html=True
 )
 
-# --- Page setup ---
+
 st.set_page_config(
     page_title="Plateforme Emploi Tech",
     layout="wide",
     initial_sidebar_state="expanded"
 )
 
-# --- Load data ---
+
 df = pd.read_csv("data/dataset_final.csv")
 
-# --- Sidebar ---
-# st.sidebar.image("TechSight.png", width=220)
-# roles = df['mapped_role'].unique()
-# selected_role = st.sidebar.selectbox("Choisir un rôle :", roles)
-# filtered_df = df[df['mapped_role'] == selected_role]
-# --- Sidebar selectbox styling ---
 st.markdown(
     """
     <style>
@@ -77,14 +70,14 @@ st.markdown(
     unsafe_allow_html=True
 )
 
-# --- Sidebar ---
+# Sidebar 
 st.sidebar.image("TechSight.png", width=220)
 roles = df['mapped_role'].unique()
 selected_role = st.sidebar.selectbox("Sélectionnez un rôle :", roles)
 filtered_df = df[df['mapped_role'] == selected_role]
 
 
-# --- Top skills ---
+# Top skills 
 def get_top_skills(df, n=10):
     skills = []
     for comp in df['Compétences'].dropna().astype(str):
@@ -98,7 +91,6 @@ def get_top_skills(df, n=10):
 
 top_skills = get_top_skills(filtered_df, n=10)
 
-# --- Hide Streamlit default icons ---
 st.markdown(
     """
     <style>
@@ -110,7 +102,7 @@ st.markdown(
     unsafe_allow_html=True
 )
 
-# --- KPI card ---
+# KPI cards
 def kpi_card(title, value, gradient="linear-gradient(135deg, #354458, #959ca7)"):
     st.markdown(f"""
         <div style="
@@ -146,7 +138,7 @@ def kpi_card(title, value, gradient="linear-gradient(135deg, #354458, #959ca7)")
         </div>
     """, unsafe_allow_html=True)
 
-# --- KPI section ---
+# KPI section 
 col1, col2, col3, col4 = st.columns([0.4, 0.4, 0.8, 1])
 
 with col1: 
@@ -235,7 +227,7 @@ with col4:
     st.pyplot(fig3)
     
 
-# --- Companies / Trends / Recents ---
+# Companies / Trends / Recents 
 col1, col2, col3 = st.columns([1, 1, 0.5])
 
 with col1:
@@ -313,7 +305,7 @@ with col3:
     kpi_card("Mois le plus actif", month_name)
 
 
-# --- Job listings table ---
+# Job listings table 
 st.markdown(
     "<h3 style='font-size:20px; color:black;'>Liste des offres</h1>", 
     unsafe_allow_html=True

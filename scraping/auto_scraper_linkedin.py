@@ -77,8 +77,8 @@ def scrape_linkedin(role, max_pages=10):
 
                 posted_text = time_el.text.strip().lower()
 
-                # Keep jobs posted in the past week (1-7 days) or hours
-                if not any(x in posted_text for x in ["hour", "hours", "h"] + [f"{i} day" for i in range(1,8)] + ["week", "w"]):
+                # Keep only jobs posted in the last 24 hours
+                if not any(x in posted_text for x in ["minute", "minutes", "hour", "hours", "h", "today", "1 day"]):
                     continue
 
                 date_el = (
