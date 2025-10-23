@@ -101,7 +101,7 @@ python scraping/auto_scraper_linkedin.py
 
 ### Automatisation
 
-Le scraping s'exécute automatiquement chaque lundi à 8h UTC via GitHub Actions. Vous pouvez aussi le déclencher manuellement depuis l'onglet "Actions" de votre repository GitHub.
+Le scraping s'exécute automatiquement chaque jour à 8h UTC via GitHub Actions. Vous pouvez aussi le déclencher manuellement depuis l'onglet "Actions" de votre repository GitHub.
 
 
 **TechSight** - Transforming job market data into actionable insights 
