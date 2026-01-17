@@ -11,16 +11,16 @@ st.markdown(
     """
     <style>
     header[data-testid="stHeader"] {
-        background-color: #f1f1e6;   
-        color: #1b1b1b;
+        background-color: #323233;   
+        color: #F6F6F6;
     }
     .stApp {
-        background-color: #f1f1e6;
-        color: #1b1b1b;
+        background-color: #323233;
+        color: #F6F6F6;
     }
     section[data-testid="stSidebar"] {
-        background-color: #354458; 
-        color: #bcc0c4; 
+        background-color: #141515; 
+        color: #F6F6F6; 
     }
     </style>
     """,
@@ -42,8 +42,6 @@ st.markdown(
     <style>
     /* Style the sidebar selectbox container */
     section[data-testid="stSidebar"] .stSelectbox {
-        background-color: #2c3e50;  /* Darker blue background */
-        border-radius: 8px;
         padding: 5px 10px;
         margin-bottom: 0px;
         padding-bottom:10px;
@@ -54,7 +52,7 @@ st.markdown(
         color: #f4f8fa;   /* Text color */
         font-weight: 600;
         font-size: 14px;
-        background-color: #3b4a5a;  /* Slightly lighter than container */
+        background-color: #323233;  /* Slightly lighter than container */
         border-radius: 8px;
     }
 
@@ -102,11 +100,24 @@ st.markdown(
     unsafe_allow_html=True
 )
 
+st.markdown(
+    """
+    <style>
+    .rounded-chart {
+        background-color: #1d1c1c;
+        border-radius: 16px;
+        padding: 16px;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True
+)
+
+
 # KPI cards
-def kpi_card(title, value, gradient="linear-gradient(135deg, #354458, #959ca7)"):
+def kpi_card(title, value, gradient="linear-gradient(135deg, #8b8b8c, #323233)"):
     st.markdown(f"""
         <div style="
-            background: rgba(255, 255, 255, 0.05);
             backdrop-filter: blur(10px);
             border-radius: 20px;
             padding: 15px 20px;
@@ -158,38 +169,78 @@ with col2:
     kpi_card("Top Skill", top_skill_display)
 
 with col3: 
-    colors = ["#647288","#3095d7","#1ba59f","#ea7361","#9e9e9e","#b0e4db","#6a9c93","#8cbfb6","#b0e4db","#787376","#623F4C"]
-    loc_counts = filtered_df[~filtered_df['Localisation'].isin(["Maroc", "Morocco"])]['Localisation'].value_counts().head(10)
+    colors = ["#dafc64", "#d26f6e", "#a175e1", "#fa7b83",
+              "#63744a", "#b0e4db", "#6a9c93", "#8cbfb6",
+              "#b0e4db", "#787376", "#623F4C"]
 
-    fig1, ax1 = plt.subplots(figsize=(6, 6.5), dpi=100)
+    loc_counts = (
+        filtered_df[~filtered_df['Localisation'].isin(["Maroc", "Morocco"])]
+        ['Localisation']
+        .value_counts()
+        .head(10)
+    )
+
+    fig1, ax1 = plt.subplots(figsize=(7, 7), dpi=120)
+
+    # Dark background cohérent
+    fig1.patch.set_facecolor("#1d1c1c")
+    ax1.set_facecolor("#1d1c1c")
+
     wedges, texts, autotexts = ax1.pie(
         loc_counts,
         labels=None,
-        autopct='%1.0f%%',
+        autopct='%1.1f%%',
         startangle=140,
         colors=colors,
-        textprops={'fontsize': 18, 'color': 'black'},
-        wedgeprops={'width': 0.4},
-        pctdistance=0.8
+        wedgeprops={
+            'width': 0.45,
+            'edgecolor': '#1d1c1c',
+            'linewidth': 2
+        },
+        pctdistance=0.75
     )
 
+    # Amélioration des labels de pourcentage
+    for autotext in autotexts:
+        autotext.set_color('black')
+        autotext.set_fontsize(15)
+
+    # Légende améliorée avec comptage
     wrapped_labels = [
-        f"{label} ({val*100/loc_counts.sum():.0f}%)" 
+        f"{label} ({val})"
         for label, val in zip(loc_counts.index, loc_counts.values)
     ]
-    ax1.legend(
-        wedges, wrapped_labels, title="Villes",
-        bbox_to_anchor=(1.05, 1), loc='upper left',
-        fontsize=12,
-        handlelength=1,
-        handletextpad=0.5,
-        borderaxespad=0.5,
-        labelspacing=1
+
+    legend = ax1.legend(
+        wedges,
+        wrapped_labels,
+        title="Villes",
+        bbox_to_anchor=(1.15, 1),
+        loc='upper left',
+        fontsize=11,
+        labelcolor="white",
+        frameon=False,
+        title_fontsize=13
     )
+
+    # Style de la légende
+    plt.setp(legend.get_title(), color="white", fontsize=14, weight='bold')
+
     ax1.set(aspect="equal")
-    fig1.text(0.02, 0.95, "Villes les plus fréquentes", fontsize=14, fontweight="bold", ha="left", va="top")
-    st.pyplot(fig1, clear_figure=True)
+
+    # Titre principal amélioré
+    fig1.text(
+        0.5, 0.98,
+        "Répartition géographique des offres",
+        fontsize=15,
+        fontweight="bold",
+        color="white",
+        ha="center",
+        va="top"
+    )
+
     
+    st.pyplot(fig1, clear_figure=True)
 
 with col4:
     skills = []
@@ -201,30 +252,96 @@ with col4:
 
     skill_counts = dict(Counter(skills))
     top_skills = dict(sorted(skill_counts.items(), key=lambda x: x[1], reverse=True)[:10])
-
-    fig3, ax3 = plt.subplots(figsize=(6, 3.4))
-    colors =  [
-    "#344256",
-    "#42556e",
-    "#516887",
-    "#607b9f",
-    "#788fae",
-    "#91a4bd",
-    "#a9b8cb",
-    "#c2ccda",
-    "#dae1e9",
-    "#f3f5f8"
+    
+    fig3, ax3 = plt.subplots(figsize=(7, 4), dpi=120)
+    
+    # Gradient de couleurs plus moderne (du foncé au clair)
+    colors = [
+        "#3b82f6",  # Bleu vif
+        "#60a5fa",
+        "#7dd3fc",
+        "#a5f3fc",
+        "#6366f1",  # Indigo
+        "#818cf8",
+        "#c084fc",  # Purple
+        "#e879f9",
+        "#f0abfc",
+        "#fae8ff"
     ]
-
-    ax3.bar(top_skills.keys(), top_skills.values(), color=colors)
-    ax3.grid(axis="y", linestyle="--", alpha=0.5)
-    ax3.set_ylabel("Nombre d'occurrences", fontsize=12, labelpad=10, color="#374151")
-    ax3.set_xlabel("Compétence",fontsize=12, labelpad=10, color="#374151")
+    
+    # Background sombre cohérent
+    fig3.patch.set_facecolor("#1d1c1c")
+    ax3.set_facecolor("#1d1c1c")
+    
+    # Création des barres avec effet visuel
+    bars = ax3.bar(
+        top_skills.keys(), 
+        top_skills.values(), 
+        color=colors,
+        edgecolor='white',
+        linewidth=1.5,
+        alpha=0.9
+    )
+    
+    # Ajout des valeurs au-dessus des barres
+    for bar in bars:
+        height = bar.get_height()
+        ax3.text(
+            bar.get_x() + bar.get_width()/2., 
+            height,
+            f'{int(height)}',
+            ha='center', 
+            va='bottom',
+            color='white',
+            fontsize=9,
+            fontweight='bold'
+        )
+    
+    # Grille plus subtile
+    ax3.grid(axis="y", linestyle="--", alpha=0.3, color='gray')
+    ax3.set_axisbelow(True)
+    
+    # Labels avec couleurs claires
+    ax3.set_ylabel(
+        "Nombre d'occurrences", 
+        fontsize=12, 
+        labelpad=10, 
+        color="white",
+        fontweight='bold'
+    )
+    ax3.set_xlabel(
+        "Compétence",
+        fontsize=12, 
+        labelpad=10, 
+        color="white",
+        fontweight='bold'
+    )
+    
+    # Rotation des labels x pour meilleure lisibilité
+    ax3.tick_params(axis='x', colors='white', labelsize=10)
+    ax3.tick_params(axis='y', colors='white', labelsize=10)
     plt.xticks(rotation=45, ha='right')
-    fig3.text(0.02, 0.98, "Top 10 compétences les plus demandées",
-              fontsize=10, fontweight="bold", ha="left", va="top")
-    plt.tight_layout(rect=[0, 0, 1, 0.90])
-    st.pyplot(fig3)
+    
+    # Suppression des bordures supérieure et droite
+    ax3.spines['top'].set_visible(False)
+    ax3.spines['right'].set_visible(False)
+    ax3.spines['left'].set_color('white')
+    ax3.spines['bottom'].set_color('white')
+    
+    # Titre centré et moderne
+    fig3.text(
+        0.5, 0.98, 
+        "Top 10 compétences les plus demandées",
+        fontsize=14, 
+        fontweight="bold", 
+        ha="center", 
+        va="top",
+        color="white"
+    )
+    
+    
+    plt.tight_layout(rect=[0, 0, 1, 0.92])
+    st.pyplot(fig3, clear_figure=True)
     
 
 # Companies / Trends / Recents 
@@ -235,61 +352,185 @@ with col1:
     if top_companies.empty:
         st.info("Pas d'entreprise à afficher pour ce rôle.")
     else:
-        fig2, ax2 = plt.subplots(figsize=(6, 3.4))
-        colors = colors =  [
-        "#445872",
-        "#607b9f",
-        "#8da1bb",
-        "#bbc6d6",
-        "#e8ecf1"
+        fig2, ax2 = plt.subplots(figsize=(7, 4.5), dpi=120)
+        
+        # Dark background
+        fig2.patch.set_facecolor("#1d1c1c")
+        ax2.set_facecolor("#1d1c1c")
+        
+        # Palette de couleurs vibrantes
+        colors = [
+            "#ff6b6b",  # Rouge coral
+            "#4ecdc4",  # Turquoise
+            "#45b7d1",  # Bleu ciel
+            "#96ceb4",  # Vert menthe
+            "#ffeaa7"   # Jaune doux
         ]
-
-        def truncate_label(label, max_len=15):
+        
+        def truncate_label(label, max_len=20):
             return label if len(label) <= max_len else label[:max_len-3] + "..."
-        truncated_labels = [truncate_label(name, max_len=15) for name in top_companies.index]
-
-        ax2.barh(truncated_labels, top_companies.values, color=colors)
-        ax2.grid(axis="x", linestyle="--", alpha=0.5)
+        
+        truncated_labels = [truncate_label(name, max_len=20) for name in top_companies.index]
+        
+        # Barres horizontales avec bordure
+        bars = ax2.barh(
+            truncated_labels, 
+            top_companies.values, 
+            color=colors,
+            edgecolor='white',
+            linewidth=1.5,
+            alpha=0.9
+        )
+        
+        # Ajout des valeurs à la fin des barres
+        for i, (bar, value) in enumerate(zip(bars, top_companies.values)):
+            ax2.text(
+                value + 0.5,
+                bar.get_y() + bar.get_height()/2,
+                f'{int(value)}',
+                va='center',
+                ha='left',
+                color='white',
+                fontsize=10,
+                fontweight='bold'
+            )
+        
+        # Grille subtile
+        ax2.grid(axis="x", linestyle="--", alpha=0.3, color='gray')
+        ax2.set_axisbelow(True)
+        
         ax2.invert_yaxis()
-        ax2.set_xlabel("Nombre d'offres", fontsize=12, labelpad=10, color="#374151")
-        ax2.set_ylabel("Entreprise", fontsize=12, labelpad=10, color="#374151")
-        fig2.text(0.02, 0.98, "Top 5 entreprises par rôle",
-                  fontsize=10, fontweight="bold", ha="left", va="top")
+        
+        # Labels en blanc
+        ax2.set_xlabel(
+            "Nombre d'offres", 
+            fontsize=12, 
+            labelpad=10, 
+            color="white",
+            fontweight='bold'
+        )
+        ax2.set_ylabel(
+            "Entreprise", 
+            fontsize=12, 
+            labelpad=10, 
+            color="white",
+            fontweight='bold'
+        )
+        
+        # Ticks en blanc
+        ax2.tick_params(axis='x', colors='white', labelsize=10)
+        ax2.tick_params(axis='y', colors='white', labelsize=10)
+        
+        # Suppression des bordures
         ax2.spines['top'].set_visible(False)
         ax2.spines['right'].set_visible(False)
-        plt.tight_layout(rect=[0, 0, 1, 0.90])
-        st.pyplot(fig2)
+        ax2.spines['left'].set_color('white')
+        ax2.spines['bottom'].set_color('white')
+        
+        # Titre centré
+        fig2.text(
+            0.5, 0.96, 
+            "Top 5 entreprises par rôle",
+            fontsize=14, 
+            fontweight="bold", 
+            ha="center", 
+            va="top",
+            color="white"
+        )
+        
+        plt.tight_layout(rect=[0, 0, 1, 0.94])
+        st.pyplot(fig2, clear_figure=True)
 
 with col2:
     filtered_df['Date'] = pd.to_datetime(filtered_df['Date'], errors='coerce')
     filtered_df['YearMonth'] = filtered_df['Date'].dt.to_period('M')
     offers_by_month = filtered_df.groupby('YearMonth').size()
-
-    fig4, ax4 = plt.subplots(figsize=(8, 4.5))
+    
+    fig4, ax4 = plt.subplots(figsize=(7, 4.5), dpi=120)
+    
+    # Dark background
+    fig4.patch.set_facecolor("#1d1c1c")
+    ax4.set_facecolor("#1d1c1c")
+    
+    # Ligne avec gradient et remplissage
     ax4.plot(
         offers_by_month.index.astype(str),
         offers_by_month.values,
         marker='o',
         linestyle='-',
-        linewidth=2.5,
-        markersize=8,
-        color="#3095d7",
-        markerfacecolor="#2D3748",
-        markeredgecolor="#3095d7"
+        linewidth=3,
+        markersize=10,
+        color="#3b82f6",
+        markerfacecolor="#60a5fa",
+        markeredgecolor="white",
+        markeredgewidth=2
     )
-
-    ax4.set_xlabel("Mois", fontsize=12, labelpad=10, color="#374151")
-    ax4.set_ylabel("Nombre d'offres", fontsize=12, labelpad=10, color="#374151")
-    ax4.grid(True, linestyle='--', alpha=0.4)
-
-    plt.xticks(rotation=45, fontsize=10, ha="right")
-    plt.yticks(fontsize=10)
+    
+    # Remplissage sous la courbe
+    ax4.fill_between(
+        range(len(offers_by_month)),
+        offers_by_month.values,
+        alpha=0.3,
+        color="#3b82f6"
+    )
+    
+    # Ajout des valeurs sur chaque point
+    for i, (month, value) in enumerate(zip(offers_by_month.index.astype(str), offers_by_month.values)):
+        ax4.text(
+            i,
+            value + max(offers_by_month.values) * 0.03,
+            f'{int(value)}',
+            ha='center',
+            va='bottom',
+            color='white',
+            fontsize=9,
+            fontweight='bold'
+        )
+    
+    # Labels en blanc
+    ax4.set_xlabel(
+        "Mois", 
+        fontsize=12, 
+        labelpad=10, 
+        color="white",
+        fontweight='bold'
+    )
+    ax4.set_ylabel(
+        "Nombre d'offres", 
+        fontsize=12, 
+        labelpad=10, 
+        color="white",
+        fontweight='bold'
+    )
+    
+    # Grille subtile
+    ax4.grid(True, linestyle='--', alpha=0.3, color='gray')
+    ax4.set_axisbelow(True)
+    
+    # Ticks en blanc
+    ax4.tick_params(axis='x', colors='white', labelsize=9)
+    ax4.tick_params(axis='y', colors='white', labelsize=10)
+    plt.xticks(rotation=45, ha="right")
+    
+    # Suppression des bordures
     ax4.spines['top'].set_visible(False)
     ax4.spines['right'].set_visible(False)
-    fig4.text(0.02, 0.98, "Évolution du nombre d'offres par mois",
-              fontsize=12, fontweight="bold", ha="left", va="top")
-    plt.tight_layout(rect=[0, 0, 1, 0.90])
-    st.pyplot(fig4)
+    ax4.spines['left'].set_color('white')
+    ax4.spines['bottom'].set_color('white')
+    
+    # Titre centré
+    fig4.text(
+        0.5, 0.96, 
+        "Évolution du nombre d'offres par mois",
+        fontsize=14, 
+        fontweight="bold", 
+        ha="center", 
+        va="top",
+        color="white"
+    )
+    
+    plt.tight_layout(rect=[0, 0, 1, 0.94])
+    st.pyplot(fig4, clear_figure=True)
 
 with col3:
     recent_offers = filtered_df[filtered_df['Date'] >= (pd.Timestamp.today() - pd.Timedelta(days=7))]
@@ -307,7 +548,7 @@ with col3:
 
 # Job listings table 
 st.markdown(
-    "<h3 style='font-size:20px; color:black;'>Liste des offres</h1>", 
+    "<h3 style='font-size:20px; color:white;'>Liste des offres :</h1>", 
     unsafe_allow_html=True
 )
 display_df = filtered_df[['Titre', 'Entreprise', 'Localisation','Date','Compétences','Lien']].copy()
