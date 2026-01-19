@@ -5,6 +5,10 @@ from collections import Counter
 import re
 import numpy as np
 import textwrap
+import base64
+
+if "page" not in st.session_state:
+    st.session_state.page = "Accueil"
 
 st.set_page_config(
     page_title="Plateforme Emploi Tech",
@@ -27,26 +31,32 @@ st.markdown(
         background-color: #141515 ; 
         color: #F6F6F6; 
     }
+    /* Sidebar buttons */
+    section[data-testid="stSidebar"] button {
+        background-color: #1d1c1c;
+        color: #e5e7eb;
+        border-radius: 12px;
+        border: 1px solid #334155;
+        padding: 0.6rem 1rem;
+        font-weight: 600;
+        transition: all 0.25s ease;
+    }
+
+    /* Hover effect */
+    section[data-testid="stSidebar"] button:hover {
+        background-color: #9cf35b;
+        color: #0f0e0f;
+        border-color: #9cf35b;
+        box-shadow: 0 0 15px rgba(156, 243, 91, 0.35);
+    }
     
     /* Sidebar divider */
     .sidebar-divider {
         height: 2px;
         background: linear-gradient(90deg, transparent, #3b82f6, transparent);
-        margin: 20px 0;
+        margin: 0;
     }
     
-    /* Filter section headers */
-    .filter-header {
-        color: #3b82f6;
-        font-size: 14px;
-        font-weight: 600;
-        text-transform: uppercase;
-        letter-spacing: 1px;
-        margin-top: 20px;
-        margin-bottom: 10px;
-        padding-left: 5px;
-        border-left: 3px solid #3b82f6;
-    }
     
     /* Stats box in sidebar */
     .sidebar-stats {
@@ -69,6 +79,37 @@ st.markdown(
         font-size: 24px;
         font-weight: bold;
     }
+
+    .nav-tabs {
+        display: flex;
+        gap: 12px;
+        margin-bottom: 30px;
+    }
+
+    .nav-tab {
+        padding: 10px 22px;
+        border-radius: 999px;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        color: #94a3b8;
+        background: #1d1c1c;
+        border: 1px solid #334155;
+        transition: all 0.25s ease;
+    }
+
+    .nav-tab:hover {
+        color: #9cf35b;
+        border-color: #9cf35b;
+    }
+
+    .nav-tab.active {
+        color: #0f0e0f;
+        background: #9cf35b;
+        border-color: #9cf35b;
+        box-shadow: 0 0 20px rgba(156, 243, 91, 0.35);
+    }
+
     
     /* Filter section headers */
     .filter-header {
@@ -77,7 +118,7 @@ st.markdown(
         font-weight: 600;
         text-transform: uppercase;
         letter-spacing: 1px;
-        margin-top: 20px;
+        margin-top: 0px;
         margin-bottom: 10px;
         padding-left: 5px;
         border-left: 3px solid #3b82f6;
@@ -121,13 +162,34 @@ st.markdown(
 
 
     .hero-section {
-        background: linear-gradient(135deg, rgba(79, 172, 254, 0.15) 0%, rgba(0, 242, 254, 0.1) 100%);
-        padding: 60px 40px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 40px 40px;
         border-radius: 24px;
-        text-align: center;
-        margin-bottom: 40px;
+        background: linear-gradient(
+            135deg,
+            rgba(79, 172, 254, 0.12) 0%,
+            rgba(0, 242, 254, 0.08) 60%,
+            rgba(156, 243, 91, 0.08) 100%
+        );
         box-shadow: 0 8px 32px rgba(0,0,0,0.5);
         border: 1px solid rgba(59, 130, 246, 0.3);
+        gap: 30px; /* space between text and image */
+        flex-wrap: wrap; /* responsive */
+    }
+
+    .hero-text {
+        flex: 1 1 50%; /* take up max 50% of width */
+        min-width: 300px; /* prevent text from shrinking too much */
+    }
+
+    .hero-image {
+        flex: 0 0 auto; /* do not stretch */
+        width: 400px; /* fixed width, adjust as needed */
+        max-width: 100%; /* responsive */
+        height: auto;
+        border-radius: 16px;
     }
 
     .hero-title {
@@ -138,7 +200,6 @@ st.markdown(
         letter-spacing: -1px;
         text-shadow: 0 0 30px rgba(96, 165, 250, 0.3);
     }
-
     .hero-subtitle {
         color: #e0e0e0;
         font-size: 20px;
@@ -175,7 +236,7 @@ st.markdown(
         bottom: 0;
         border-radius: 20px;
         padding: 2px;
-        background: linear-gradient(135deg, #3b82f6, #8b5cf6, #ec4899);
+        background: #9cf35b;
         -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
         mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
         -webkit-mask-composite: xor;
@@ -190,7 +251,7 @@ st.markdown(
 
     .stat-card:hover {
         transform: translateY(-8px);
-        box-shadow: 0 20px 40px rgba(59, 130, 246, 0.3);
+        box-shadow: 0 10px 25px rgba(156, 243, 91, 0.25);
     }
     .stat-card svg {
         width: 52px;
@@ -291,7 +352,7 @@ st.markdown(
 
 df = pd.read_csv("data/dataset_final.csv")
 
-st.sidebar.image("TechSight.png", width=220)
+st.sidebar.image("TechSight-sidebar.png", width=220)
 
 def kpi_card(title, value):
     st.markdown(f"""
@@ -306,29 +367,43 @@ def kpi_card(title, value):
     """, unsafe_allow_html=True)
 
 
-# Navigation Menu (for multi-page)
-st.sidebar.markdown('<div class="filter-header">Navigation</div>', unsafe_allow_html=True)
-page = st.sidebar.radio(
-    "",
-    ["Accueil", "Analyse par Rôle"],
-    label_visibility="collapsed"
-)
-
-
-
-if page == "Accueil":
-    # Hero Section - Nouvelle version
-    st.markdown("""
-        <div class="hero-section">
-            <h1 class="hero-title">
-                TechSight Platform
-            </h1>
-            <p class="hero-subtitle">
-                Analysez le marché de l'emploi tech au Maroc en temps réel
-            </p>
-        </div>
-    """, unsafe_allow_html=True)
+with st.sidebar:
     
+    st.sidebar.markdown('<div class="sidebar-divider"></div>', unsafe_allow_html=True)
+    st.markdown(
+        '<div class="filter-header">Navigation</div>',
+        unsafe_allow_html=True
+    )
+
+    if st.button("Accueil", use_container_width=True):
+        st.session_state.page = "Accueil"
+
+    if st.button("Analytics", use_container_width=True):
+        st.session_state.page = "Analytics"
+
+
+
+
+# Convert image to base64
+def get_base64_image(img_path):
+    with open(img_path, "rb") as f:
+        data = f.read()
+    return base64.b64encode(data).decode()
+
+img_base64 = get_base64_image("TechSight.png")  #"home-image.png"
+
+if st.session_state.page == "Accueil":
+    # Hero Section - Nouvelle version
+    st.markdown(f"""
+        <div class="hero-section">
+            <div class="hero-text">
+                <h1 class="hero-title">TechSight Platform</h1>
+                <p class="hero-subtitle">TechSight est une application web qui analyse le marché de l'emploi tech au Maroc en exploitant le web scraping des offres publiées sur LinkedIn Jobs pour des rôles technologiques prédéfinis. Elle transforme ces données en insights exploitables sur les compétences demandées, les tendances du marché et la répartition des opportunités, afin d’aider les candidats et les professionnels à mieux comprendre et anticiper les besoins du secteur.</p>
+            </div>
+            <img class="hero-image" src="data:image/png;base64,{img_base64}">
+        </div>
+        """, unsafe_allow_html=True)
+
     # Main Stats Grid - 4 grandes cartes
     st.markdown("""
         <div class="stats-grid">
@@ -383,19 +458,17 @@ if page == "Accueil":
     
     st.markdown("</div>", unsafe_allow_html=True)
     
+elif st.session_state.page == "Analytics":
     
-
-
-if page == "Analyse par Rôle":
     # Role Filter with icon
     roles = sorted(df['mapped_role'].dropna().unique())
-    st.sidebar.markdown('<div class="sidebar-divider"></div>', unsafe_allow_html=True)
     selected_role = st.sidebar.selectbox(
-        "Sélectionnez un rôle",
+        "Choose a Role",        
         roles,
-        help="Filtrer les offres par domaine d'expertise"
+        help="Select the job role you want to filter by"
     )
-    st.sidebar.markdown('<div class="sidebar-divider"></div>', unsafe_allow_html=True)
+
+
 
     # Quick Stats in Sidebar
     filtered_df = df[df['mapped_role'] == selected_role]
