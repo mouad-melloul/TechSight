@@ -1,6 +1,6 @@
 import pandas as pd
-import time
-import spacy
+import time  # Gestion des délais
+import spacy # NLP pour extraction de compétences
 from spacy.matcher import PhraseMatcher
 from bs4 import BeautifulSoup
 from selenium import webdriver
@@ -11,26 +11,27 @@ from selenium.webdriver.support import expected_conditions as EC
 import unicodedata
 import chromedriver_autoinstaller
 
-# ---------------------- CHROMEDRIVER SETUP ----------------------
-chromedriver_autoinstaller.install()  # Automatically install the correct ChromeDriver
+#! Configuration de ChromeDriver :
+chromedriver_autoinstaller.install()  
 
 chrome_options = Options()
-chrome_options.add_argument("--headless")
+chrome_options.add_argument("--headless") # pas d'interface graphique
 chrome_options.add_argument("--no-sandbox")
 chrome_options.add_argument("--disable-dev-shm-usage")
-chrome_options.add_argument("user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64)")
+chrome_options.add_argument("user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64)") # Simule un vrai navigateur
 
 driver = webdriver.Chrome(options=chrome_options)
 driver.set_page_load_timeout(30)
 
-# ---------------------- PARAMETERS ----------------------
+#! Paramètres de scraping :
 roles = ["data engineer", "data analyst", "data scientist", "web developer", "software engineer"]
+# endpoint (API publique/cachée) qui permet de récupérer des offres d'emploi sans authentification (guest)
 linkedin_base = "https://www.linkedin.com/jobs-guest/jobs/api/seeMoreJobPostings/search/?keywords={query}&location=Morocco"
 
 all_offers = []
 
+#! Extraction automatique de compétences (NLP) :
 nlp = spacy.load("en_core_web_sm")
-
 possible_skills = [
     "python", "java", "javascript", "c++", "c#", "R", "php", "typescript", "html", "css",
     "tensorflow", "keras", "pytorch", "scikit-learn", "pandas", "numpy", "matplotlib", "seaborn", "spark", "hadoop",
@@ -46,17 +47,23 @@ matcher = PhraseMatcher(nlp.vocab, attr="LOWER")
 patterns = [nlp.make_doc(skill) for skill in possible_skills]
 matcher.add("SKILLS", patterns)
 
-# ---------------------- SCRAPER FUNCTION ----------------------
+
+#! main function :
 def scrape_linkedin(role, max_pages=10):
     page = 0
     while page < max_pages:
-        url = linkedin_base.format(query=role.replace(" ", "%20")) + f"&start={page * 25}"
+        url = linkedin_base.format(query=role.replace(" ", "%20")) + f"&start={page * 25}" # LinkedIn pagine par 25 résultats
         try:
             driver.get(url)
         except Exception as e:
             print(f"[ERROR] Failed to load {url} : {e}")
             break
         time.sleep(3)
+        '''
+        time.sleep(3) :
+        - wait for pages to load
+        - reduce risk of being blocked
+        - behave more like a human '''
 
         soup = BeautifulSoup(driver.page_source, "html.parser")
         job_cards = soup.find_all("div", class_="base-card")
@@ -75,9 +82,8 @@ def scrape_linkedin(role, max_pages=10):
                 if not title_el or not link_el or not time_el:
                     continue
 
+                # Filtre temporel (offres récentes uniquement)
                 posted_text = time_el.text.strip().lower()
-
-                # Keep only jobs posted in the last 24 hours
                 if not any(x in posted_text for x in ["minute", "minutes", "hour", "hours", "h", "today", "1 day"]):
                     continue
 
@@ -90,6 +96,7 @@ def scrape_linkedin(role, max_pages=10):
 
                 job_link = link_el["href"]
 
+                # Extraction des détails (ouverture d'onglets)
                 driver.execute_script("window.open(arguments[0]);", job_link)
                 driver.switch_to.window(driver.window_handles[1])
 
@@ -102,6 +109,7 @@ def scrape_linkedin(role, max_pages=10):
                     description_el = None
 
                 skills = []
+                # Extraction des compétences via NLP
                 if description_el:
                     description_text = description_el.get_text(separator=" ").strip()
                     doc = nlp(description_text)
@@ -109,6 +117,7 @@ def scrape_linkedin(role, max_pages=10):
                     found_skills = set(span.text.lower() for _, start, end in matches for span in [doc[start:end]])
                     skills = sorted(found_skills)
 
+                # Stockage des données
                 all_offers.append({
                     "Source": "LinkedIn",
                     "Rôle": role,
@@ -135,7 +144,7 @@ import os
 script_dir = os.path.dirname(os.path.abspath(__file__))
 dataset_final_path = os.path.join(script_dir, "..", "data", "dataset_final.csv")
 
-# ---------------------- CLEANER FUNCTION ----------------------
+#! CLEANER FUNCTION 
 def cleaner(df):
     df = df.copy()
     source = df['Source'].unique()[0]
@@ -145,7 +154,7 @@ def cleaner(df):
         if df[col].dtype == 'object':
             df[col] = df[col].astype('string')
 
-        
+    # Normalisation des villes marocaines
     moroccan_cities = [
         "Casablanca","Rabat","Tangier","Tanger","Fez","Fès","Marrakesh","Marrakech","Salé","Meknès","Oujda",
         "Kenitra","Agadir","Tetouan","Tétouan","Temara","Safi","Mohammedia","Khouribga",
@@ -205,7 +214,7 @@ def cleaner(df):
         if matched_city:
             df.loc[i, 'Localisation'] = matched_city
 
-
+    # Mapping des titres vers les rôles standardisés
     role_keywords = {
         "data scientist": ["data scientist", "data scientists", "data science"],
         "data analyst": ["data analyst", "business analyst","analyste","analyst","data analytics","power bi developer"],
@@ -230,6 +239,7 @@ def cleaner(df):
 
     df['mapped_role'] = df['Titre'].apply(map_title_to_role)
     df.drop(df[df["mapped_role"] == "autre"].index, axis=0, inplace=True)
+    # Suppression des doublons
     df.drop_duplicates(inplace=True)
     df.drop_duplicates(subset=["Titre", "Entreprise", "Localisation"], inplace=True)
     df.drop('Rôle', axis=1, inplace=True, errors="ignore")
@@ -237,15 +247,13 @@ def cleaner(df):
     df.to_csv(dataset_final_path, index=False)
     return df
 
-# ---------------------- RUN ----------------------
+#!  Exécution et fusion
 for role in roles:
     scrape_linkedin(role)
 
 driver.quit()
 
 new_df = pd.DataFrame(all_offers)
-
-
 # Merge with existing dataset
 try:
     old_df = pd.read_csv(dataset_final_path)
