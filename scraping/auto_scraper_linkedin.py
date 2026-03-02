@@ -1,6 +1,7 @@
 import pandas as pd
-import time  # Gestion des délais
-import spacy # NLP pour extraction de compétences
+import time
+import random
+import spacy
 from spacy.matcher import PhraseMatcher
 from bs4 import BeautifulSoup
 from selenium import webdriver
@@ -10,6 +11,8 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 import unicodedata
 import chromedriver_autoinstaller
+import os
+import re
 
 #! Configuration de ChromeDriver :
 chromedriver_autoinstaller.install()  
@@ -18,35 +21,187 @@ chrome_options = Options()
 chrome_options.add_argument("--headless") # pas d'interface graphique
 chrome_options.add_argument("--no-sandbox")
 chrome_options.add_argument("--disable-dev-shm-usage")
-chrome_options.add_argument("user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64)") # Simule un vrai navigateur
+chrome_options.add_argument(
+    "user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64)" # Simule un vrai navigateur
+) 
 
 driver = webdriver.Chrome(options=chrome_options)
 driver.set_page_load_timeout(30)
 
 #! Paramètres de scraping :
-roles = ["data engineer", "data analyst", "data scientist", "web developer", "software engineer"]
+roles = [
+    "data engineer",
+    "data analyst",
+    "data scientist",
+    "web developer",
+    "software engineer"
+]
 # endpoint (API publique/cachée) qui permet de récupérer des offres d'emploi sans authentification (guest)
 linkedin_base = "https://www.linkedin.com/jobs-guest/jobs/api/seeMoreJobPostings/search/?keywords={query}&location=Morocco"
 
 all_offers = []
 
 #! Extraction automatique de compétences (NLP) :
-nlp = spacy.load("en_core_web_sm")
-possible_skills = [
-    "python", "java", "javascript", "c++", "c#", "R", "php", "typescript", "html", "css",
-    "tensorflow", "keras", "pytorch", "scikit-learn", "pandas", "numpy", "matplotlib", "seaborn", "spark", "hadoop",
-    "sql", "nosql", "mongodb", "mysql", "postgresql", "oracle",
-    "aws", "azure", "google cloud", "gcp", "ibm cloud",
-    "docker", "git", "ci/cd", "linux", "airflow",
-    "tableau", "power bi", "machine learning", "deep learning", "natural language processing", "nlp",
-    "computer vision", "reinforcement learning",
-    "rest api", "graphql", "microservices", "agile", "scrum", "excel",
-    "node.js", "react", "spring boot", "django"
-]
+nlp = spacy.load("en_core_web_sm", disable=["parser", "ner", "tagger"])
+
+def normalize_text(text):
+    text = text.lower().strip()
+    return ''.join(
+        c for c in unicodedata.normalize('NFD', text)
+        if unicodedata.category(c) != 'Mn'
+    )
+
+skills_dict = {
+
+    # LANGUAGES
+
+    "python": ["python"],
+    "java": ["java"],
+    "javascript": ["javascript", "js"],
+    "typescript": ["typescript", "ts"],
+    "c++": ["c++"],
+    "c#": ["c#"],
+    "c": ["c"],
+    "php": ["php"],
+    "scala": ["scala"],
+    "swift": ["swift"],
+    "r": ["r", "r language"],
+    "matlab": ["matlab"],
+    "bash": ["bash", "shell scripting"],
+    "powershell": ["powershell"],
+
+    # WEB / FRONTEND
+
+    "html": ["html"],
+    "css": ["css"],
+    "react": ["react"],
+    "next.js": ["next.js", "nextjs"],
+    "angular": ["angular"],
+    "vue": ["vue", "vue.js"],
+    "tailwind": ["tailwind", "tailwindcss"],
+    "bootstrap": ["bootstrap"],
+
+    # BACKEND
+
+    "node.js": ["node.js", "nodejs"],
+    "express": ["express", "express.js"],
+    "spring boot": ["spring boot"],
+    "spring": ["spring framework"],
+    "django": ["django"],
+    "flask": ["flask"],
+    "fastapi": ["fastapi"],
+    "laravel": ["laravel"],
+    "graphql": ["graphql"],
+    "rest api": ["rest api", "restful"],
+    "microservices": ["microservices"],
+
+    # DATABASES
+
+    "sql": ["sql"],
+    "postgresql": ["postgresql", "postgres"],
+    "mysql": ["mysql"],
+    "sql server": ["sql server", "mssql"],
+    "oracle": ["oracle"],
+    "sqlite": ["sqlite"],
+    "mongodb": ["mongodb"],
+
+    # DATA ENGINEERING
+
+    "spark": ["spark", "pyspark"],
+    "hadoop": ["hadoop"],
+    "kafka": ["kafka"],
+    "airflow": ["airflow"],
+    "etl": ["etl"],
+    "elt": ["elt"],
+    "snowflake": ["snowflake"],
+    "bigquery": ["bigquery"],
+    "redshift": ["redshift"],
+    "databricks": ["databricks"],
+    "data warehouse": ["data warehouse"],
+    "data lake": ["data lake"],
+
+    # DATA SCIENCE / ML
+
+    "machine learning": ["machine learning"],
+    "deep learning": ["deep learning"],
+    "nlp": ["nlp", "natural language processing"],
+    "computer vision": ["computer vision"],
+    "reinforcement learning": ["reinforcement learning"],
+    "time series": ["time series", "forecasting"],
+    "scikit-learn": ["scikit-learn", "sklearn"],
+    "pandas": ["pandas"],
+    "numpy": ["numpy"],
+    "scipy": ["scipy"],
+    "matplotlib": ["matplotlib"],
+    "seaborn": ["seaborn"],
+    "plotly": ["plotly"],
+    "spacy": ["spacy"],
+    "huggingface": ["huggingface"],
+    "llm": ["llm", "large language model"],
+
+    # MLOPS
+
+    "mlops": ["mlops"],
+    "model deployment": ["model deployment"],
+    "model monitoring": ["model monitoring"],
+    "mlflow": ["mlflow"],
+
+    # CLOUD
+
+    "aws": ["aws", "amazon web services"],
+    "azure": ["azure"],
+    "gcp": ["gcp", "google cloud"],
+    "docker": ["docker"],
+    "github actions": ["github actions"],
+    "ci/cd": ["ci/cd", "continuous integration"],
+    "apache": ["apache"],
+
+    # BI / ANALYTICS
+
+    "power bi": ["power bi"],
+    "tableau": ["tableau"],
+    "excel": ["excel"],
+    "statistics": ["statistics"],
+
+    # SOFTWARE ENGINEERING
+    
+    "design patterns": ["design patterns"],
+    "unit testing": ["unit testing"],
+    "agile": ["agile"],
+    "scrum": ["scrum"],
+    "jira": ["jira"],
+    "git": ["git"],
+    "github": ["github"],
+    "gitlab": ["gitlab"],
+}
+
 matcher = PhraseMatcher(nlp.vocab, attr="LOWER")
-patterns = [nlp.make_doc(skill) for skill in possible_skills]
+
+patterns = []
+skill_lookup = {}
+
+for canonical, variations in skills_dict.items():
+    for variation in variations:
+        norm_variation = normalize_text(variation)
+        patterns.append(nlp.make_doc(norm_variation))
+        skill_lookup[norm_variation] = canonical
+
 matcher.add("SKILLS", patterns)
 
+
+def extract_skills(text):
+    text_norm = normalize_text(text)
+    doc = nlp(text_norm)
+
+    matches = matcher(doc)
+    found = set()
+
+    for _, start, end in matches:
+        span = doc[start:end].text
+        if span in skill_lookup:
+            found.add(skill_lookup[span])
+
+    return sorted(found)
 
 #! main function :
 def scrape_linkedin(role, max_pages=10):
@@ -99,39 +254,39 @@ def scrape_linkedin(role, max_pages=10):
                 # Extraction des détails (ouverture d'onglets)
                 driver.execute_script("window.open(arguments[0]);", job_link)
                 driver.switch_to.window(driver.window_handles[1])
-
-                wait = WebDriverWait(driver, 10)
+                
                 try:
-                    wait.until(EC.presence_of_element_located((By.CLASS_NAME, "show-more-less-html__markup")))
-                    detail_soup = BeautifulSoup(driver.page_source, "html.parser")
-                    description_el = detail_soup.find("div", class_="show-more-less-html__markup")
-                except:
-                    description_el = None
+                    wait = WebDriverWait(driver, 10)
+                    try:
+                        wait.until(EC.presence_of_element_located((By.CLASS_NAME, "show-more-less-html__markup")))
+                        detail_soup = BeautifulSoup(driver.page_source, "html.parser")
+                        description_el = detail_soup.find("div", class_="show-more-less-html__markup")
+                    except:
+                        description_el = None
 
-                skills = []
-                # Extraction des compétences via NLP
-                if description_el:
-                    description_text = description_el.get_text(separator=" ").strip()
-                    doc = nlp(description_text)
-                    matches = matcher(doc)
-                    found_skills = set(span.text.lower() for _, start, end in matches for span in [doc[start:end]])
-                    skills = sorted(found_skills)
+                    skills = []
+                    # Extraction des compétences via NLP
+                    if description_el:
+                        description_text = description_el.get_text(separator=" ").strip()
+                        skills = extract_skills(description_text)
 
-                # Stockage des données
-                all_offers.append({
-                    "Source": "LinkedIn",
-                    "Rôle": role,
-                    "Titre": title_el.text.strip(),
-                    "Entreprise": company_el.text.strip() if company_el else "",
-                    "Localisation": location_el.text.strip() if location_el else "",
-                    "Lien": job_link,
-                    "Compétences": ", ".join(skills),
-                    "Date": date_attr 
-                })
-
-                driver.close()
-                driver.switch_to.window(driver.window_handles[0])
-                time.sleep(1)
+                    # Stockage des données
+                    all_offers.append({
+                        "Source": "LinkedIn",
+                        "Rôle": role,
+                        "Titre": title_el.text.strip(),
+                        "Entreprise": company_el.text.strip() if company_el else "",
+                        "Localisation": location_el.text.strip() if location_el else "",
+                        "Lien": job_link,
+                        "Compétences": ", ".join(skills),
+                        "Date": date_attr 
+                    })
+                
+                finally:
+                    driver.close()
+                    driver.switch_to.window(driver.window_handles[0])
+                    time.sleep(1)
+                
             except Exception as e:
                 print(f"[ERROR] {e}")
                 continue
@@ -209,10 +364,9 @@ def cleaner(df):
 
         return None
 
-    for i, loc in enumerate(df['Localisation']):
-        matched_city = map_location_to_city(loc)
-        if matched_city:
-            df.loc[i, 'Localisation'] = matched_city
+    df['Localisation'] = df['Localisation'].apply(
+        lambda loc: map_location_to_city(loc) if pd.notna(loc) else loc
+    ).fillna(df['Localisation'])
 
     # Mapping des titres vers les rôles standardisés
     role_keywords = {
@@ -239,10 +393,11 @@ def cleaner(df):
 
     df['mapped_role'] = df['Titre'].apply(map_title_to_role)
     df.drop(df[df["mapped_role"] == "autre"].index, axis=0, inplace=True)
+
     # Suppression des doublons
-    df.drop_duplicates(inplace=True)
+    df.drop('Rôle', axis=1, inplace=True, errors="ignore")  
+    df.drop_duplicates(inplace=True)  # Rôle isn't compared
     df.drop_duplicates(subset=["Titre", "Entreprise", "Localisation"], inplace=True)
-    df.drop('Rôle', axis=1, inplace=True, errors="ignore")
 
     df.to_csv(dataset_final_path, index=False)
     return df
