@@ -9,6 +9,9 @@ on:
   pull_request:
     branches: [main]
   workflow_dispatch:
+  workflow_run:
+    workflows: ["LinkedIn Scraper"]
+    types: [completed]
 
 # Annule les exécutions obsolètes d'une même branche
 concurrency:

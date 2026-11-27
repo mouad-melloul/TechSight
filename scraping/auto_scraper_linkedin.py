@@ -409,6 +409,9 @@ for role in roles:
 driver.quit()
 
 new_df = pd.DataFrame(all_offers)
+if new_df.empty:
+    print("Aucune nouvelle offre")
+    raise SystemExit(0)
 # Merge with existing dataset
 try:
     old_df = pd.read_csv(dataset_final_path)
